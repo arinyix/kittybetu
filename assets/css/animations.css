@@ -1,0 +1,37 @@
+/* Animations & Glow */
+.btn {
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 12px var(--lilac); }
+  50% { box-shadow: 0 0 24px var(--magenta); }
+  100% { box-shadow: 0 0 12px var(--lilac); }
+}
+.table tr:hover {
+  background: var(--accent);
+  color: var(--ink);
+  transition: background 0.3s;
+}
+input:focus, select:focus {
+  animation: focusGlow 0.3s;
+}
+@keyframes focusGlow {
+  0% { box-shadow: 0 0 0 var(--lilac); }
+  100% { box-shadow: 0 0 8px var(--lilac); }
+}
+nav a {
+  position: relative;
+  overflow: hidden;
+}
+nav a::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -2px;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, var(--lilac), var(--magenta));
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+nav a:hover::after {
+  transform: scaleX(1);
+}
