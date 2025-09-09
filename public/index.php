@@ -1,106 +1,40 @@
 <?php
-// Exibir erros para debug
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+$pageTitle = 'Login';
+require_once __DIR__.'/partials/header.php';
+require_once __DIR__.'/../src/classes/Auth.php';
 
-// Bootstrap: Autoload Composer, configs, helpers
-require_once __DIR__ . '/../vendor/autoload.php';
-$appConfig = require __DIR__ . '/../config/app.php';
-$dbConfig = require __DIR__ . '/../config/database.php';
-$jwtConfig = require __DIR__ . '/../config/jwt.php';
-
-// Helpers
-require_once __DIR__ . '/../app/helpers/security.php';
-require_once __DIR__ . '/../app/helpers/csrf.php';
-require_once __DIR__ . '/../app/helpers/validation.php';
-require_once __DIR__ . '/../app/helpers/cpf.php';
-require_once __DIR__ . '/../app/helpers/phone.php';
-
-// Middlewares
-require_once __DIR__ . '/../app/middlewares/AuthMiddleware.php';
-require_once __DIR__ . '/../app/middlewares/CsrfMiddleware.php';
-
-// Controllers
-require_once __DIR__ . '/../app/controllers/AuthController.php';
-require_once __DIR__ . '/../app/controllers/UserController.php';
-
-// Simple router by query string
-$uri = strtok($_SERVER['REQUEST_URI'], '?');
-$method = $_SERVER['REQUEST_METHOD'];
-
-// Auth check
-$auth = new AuthMiddleware($jwtConfig);
-$isAuth = $auth->check();
-
-// CSRF check for POST
-if ($method === 'POST') {
-    $csrf = new CsrfMiddleware();
-    if (!$csrf->validate($_POST['csrf_token'] ?? '')) {
-        http_response_code(403);
-        echo 'CSRF token inválido.';
-        exit;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!CSRF::check('login_form', $_POST['csrf_token'] ?? '')) {
+        Response::flash('error', 'CSRF inválido. Atualize a página.');
+        Response::redirect(APP_URL.'/index.php');
+    }
+    $auth = new Auth();
+    $res = $auth->login(trim($_POST['email'] ?? ''), (string)($_POST['senha'] ?? ''));
+    if ($res['ok']) {
+        Response::flash('success', 'Bem-vindo(a)!');
+        Response::redirect(APP_URL.'/dashboard.php');
+    } else {
+        Response::flash('error', $res['error'] ?? 'Falha no login.');
+        Response::redirect(APP_URL.'/index.php');
     }
 }
-
-// Routing
-switch (true) {
-    case $uri === '/' || $uri === '/kittybetu/public/':
-        if ($isAuth) {
-            header('Location: /kittybetu/public/dashboard');
-        } else {
-            header('Location: /kittybetu/public/login');
-        }
-        exit;
-    case $uri === '/kittybetu/public/login' && $method === 'GET':
-        (new AuthController($dbConfig, $jwtConfig))->showLogin();
-        break;
-    case $uri === '/kittybetu/public/login' && $method === 'POST':
-        (new AuthController($dbConfig, $jwtConfig))->login($_POST);
-        break;
-    case $uri === '/kittybetu/public/register' && $method === 'GET':
-        (new AuthController($dbConfig, $jwtConfig))->showRegister();
-        break;
-    case $uri === '/kittybetu/public/register' && $method === 'POST':
-        (new AuthController($dbConfig, $jwtConfig))->register($_POST);
-        break;
-    case $uri === '/kittybetu/public/logout' && $method === 'POST':
-        (new AuthController($dbConfig, $jwtConfig))->logout();
-        break;
-    case $uri === '/kittybetu/public/dashboard' && $method === 'GET':
-        if (!$isAuth) { header('Location: /kittybetu/public/login'); exit; }
-        require __DIR__ . '/../app/views/dashboard/index.php';
-        break;
-    case $uri === '/kittybetu/public/users' && $method === 'GET':
-        if (!$isAuth) { header('Location: /kittybetu/public/login'); exit; }
-        (new UserController($dbConfig))->list($_GET);
-        break;
-    case preg_match('#^/kittybetu/public/users/(\d+)$#', $uri, $m) && $method === 'GET':
-        if (!$isAuth) { header('Location: /kittybetu/public/login'); exit; }
-        (new UserController($dbConfig))->show($m[1]);
-        break;
-    case preg_match('#^/kittybetu/public/users/(\d+)/edit$#', $uri, $m) && $method === 'GET':
-        if (!$isAuth) { header('Location: /kittybetu/public/login'); exit; }
-        (new UserController($dbConfig))->edit($m[1]);
-        break;
-    case preg_match('#^/kittybetu/public/users/(\d+)/update$#', $uri, $m) && $method === 'POST':
-        if (!$isAuth) { header('Location: /kittybetu/public/login'); exit; }
-        (new UserController($dbConfig))->update($m[1], $_POST);
-        break;
-    case preg_match('#^/kittybetu/public/users/(\d+)/password$#', $uri, $m) && $method === 'GET':
-        if (!$isAuth) { header('Location: /kittybetu/public/login'); exit; }
-        (new UserController($dbConfig))->changePasswordForm($m[1]);
-        break;
-    case preg_match('#^/kittybetu/public/users/(\d+)/password$#', $uri, $m) && $method === 'POST':
-        if (!$isAuth) { header('Location: /kittybetu/public/login'); exit; }
-        (new UserController($dbConfig))->changePassword($m[1], $_POST);
-        break;
-    case preg_match('#^/kittybetu/public/users/(\d+)/delete$#', $uri, $m) && $method === 'POST':
-        if (!$isAuth) { header('Location: /kittybetu/public/login'); exit; }
-        (new UserController($dbConfig))->delete($m[1]);
-        break;
-    default:
-        http_response_code(404);
-        echo 'Página não encontrada.';
-        break;
-}
+?>
+<div class="grid col-2">
+  <section class="card">
+    <h1>Entrar</h1>
+    <form method="post" novalidate>
+      <?= CSRF::input('login_form') ?>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required autocomplete="email" placeholder="seu@email.com">
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" minlength="6" required autocomplete="current-password">
+      <button type="submit">Entrar</button>
+    </form>
+    <p class="helper">Ainda não tem conta? <a class="btn" href="<?= e(APP_URL) ?>/register.php">Cadastrar</a></p>
+  </section>
+  <section class="card">
+    <h2>Sobre o projeto</h2>
+    <p class="muted">Demonstração acadêmica com foco em segurança (PDO, CSRF, XSS, JWT) e UI neon.</p>
+  </section>
+</div>
+<?php require_once __DIR__.'/partials/footer.php'; ?>
