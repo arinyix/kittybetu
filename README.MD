@@ -92,3 +92,8 @@ Permissões do htdocs: se der EACCES, ajuste posse e permissões como acima.
 Admin & exclusão: por padrão, só o admin@kittybetu.com pode excluir terceiros; usuário comum só exclui a si mesmo — ética mínima para demo.
 
 Escalar: se quiser logs/auditoria, crie uma tabela audit_log e registre login/logout, updates e deletes.
+
+
+adm
+
+adm123456

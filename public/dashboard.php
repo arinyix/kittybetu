@@ -7,7 +7,6 @@ require_once __DIR__.'/partials/header.php';
   <h1>Olá, <?= e($__user['nome'] ?? 'Usuário') ?> 👋</h1>
   <p class="muted">Bem-vindo(a) ao kittybetU. Este painel é didático, sem transações reais.</p>
   <div class="actions">
-    <a class="btn" href="<?= e(APP_URL) ?>/users.php">Gerenciar usuários</a>
     <a class="btn" href="<?= e(APP_URL) ?>/profile.php">Editar perfil</a>
     <a class="btn" href="<?= e(APP_URL) ?>/change_password.php">Alterar senha</a>
   </div>

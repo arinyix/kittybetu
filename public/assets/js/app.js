@@ -38,3 +38,20 @@ document.addEventListener('submit', (e)=>{
     alert('Informe um email válido.');
   }
 });
+
+// --- Toggle blocos de odds por mercado (create_match.php) ---
+(function(){
+  const sel = document.getElementById('mercadoSel');
+  if (!sel) return;
+  const block12 = document.querySelector('.odds-1x2');
+  const blockdc = document.querySelector('.odds-dc');
+  const blockv  = document.querySelector('.odds-v');
+  function update(){
+    const v = sel.value;
+    if (block12) block12.style.display = (v==='1x2') ? '' : 'none';
+    if (blockdc) blockdc.style.display = (v==='dupla_chance') ? '' : 'none';
+    if (blockv)  blockv.style.display  = (v==='vencedor') ? '' : 'none';
+  }
+  sel.addEventListener('change', update);
+  update();
+})();
